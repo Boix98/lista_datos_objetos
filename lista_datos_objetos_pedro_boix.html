@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista datos con objetos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #252A34;
+        }
+
+        .contenedor {
+            padding: 2rem;
+            background: #08D9D6;
+            min-height: 100vh;
+            width: 90vw;
+            margin: auto;
+        }
+
+        h1 {
+            width: 70%;
+            margin: auto;
+            color: #FF2E63;
+            text-shadow: 2px 2px black, -2px 2px black, 2px -2px black, -2px -2px black;
+            text-align: center;
+            border: solid;
+            border-width: 5px 0;
+            font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+            padding: .5rem;
+            font-size: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .principal {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .inputs {
+            display: flex;
+            flex-direction: column;
+            row-gap: 1rem;
+        }
+
+        .inputs p {
+            border: solid black;
+            border-width: 2px 0;
+            display: flex;
+            position: relative;
+            justify-content: space-between;
+            column-gap: 2rem;
+            align-items: center;
+            background-color: rgba(0, 0, 0, .5);
+            padding: .5rem;
+        }
+
+        label {
+            font-weight: bold;
+            color: #EAEAEA;
+        }
+
+        input {
+            padding: 5px .5rem;
+            border: 2px solid black;
+            width: 200px;
+        }
+
+        .botonera {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        #btn_add,
+        #btn_editar {
+            cursor: auto;
+            padding: .5rem;
+            width: 100px;
+            font-weight: bold;
+            background-color: #EAEAEA;
+            border-radius: 10px;
+            border: 1px solid;
+        }
+        button:hover{
+            cursor: pointer;
+            background-color: gray;
+        }
+        #btn_add:hover:not([disabled]),
+        #btn_editar:hover:not([disabled]){
+            cursor: pointer;
+            background-color: #08D9D6;
+            color: #252A34;
+        }
+        #btn_add:active:not([disabled]),
+        #btn_editar:active:not([disabled]){
+            background-color: #FF2E63;
+            color: #EAEAEA;
+        }
+
+        .salida {
+            margin-top: 2rem;
+        }
+
+        table,
+        td {
+            border: 3px solid;
+            border-collapse: collapse;
+            text-align: center;
+            margin: auto;
+        }
+
+        .tabla-titulo {
+            background-color: #252A34;
+            color: #EAEAEA;
+            padding: .5rem;
+            font-weight: bold;
+        }
+
+        thead {
+            background-color: #EAEAEA;
+        }
+
+        th,
+        td {
+            padding: .5rem;
+            background-color: #EAEAEA;
+            cursor: default;
+        }
+
+        .botones-tabla {
+            padding: 0;
+        }
+
+        .edita-elemento {
+            padding: .5rem;
+            background-color: #EAEAEA;
+            border: 1px solid;
+            height: 40px;
+            border: none;
+            font-weight: bold;
+        }
+
+        .edita-elemento:first-child {
+            border-right: 3px solid;
+        }
+        .globo-error{
+            margin-left: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            width: 280px;
+            position: absolute;
+            left: 100%;
+            padding: .7rem;
+            background-color: rgba(0, 0, 0, .7);
+            border-radius: 1rem;
+            text-align: center;
+        }
+        .globo-error::before {
+            content: '';
+            height: 0;width: 0;
+            justify-self: center;
+            align-self: center;
+            border: solid;
+            position: absolute;
+            right: 100%;
+            border-width: 7px 7px 7px 0;
+            border-color: transparent rgba(0, 0, 0, .7) transparent transparent;
+        }
+    </style>
+
+</head>
+
+<main>
+    <div class="contenedor">
+        <header>
+            <h1>Gestion lista de datos con Objetos JS</h1>
+        </header>
+
+        <body>
+            <section class="principal">
+                <div class="inputs">
+                    <p><label for="nombre">Nombre: </label><input type="text" name="nombre" id="nombre"></p>
+                    <p><label for="apellidos">Apellidos: </label><input type="text" name="apellidos" id="apellidos"></p>
+                    <p><label for="poblacion">Población: </label><input type="text" name="poblacion" id="poblacion"></p>
+                    <p><label for="anyo">Año: </label><input type="number" name="anyo" id="anyo" min="1900" max="2022" maxlength="4"></p>
+                    <div class="botonera">
+                        <button id="btn_add">Añadir</button>
+                        <button id="btn_editar" disabled>Editar</button>
+                    </div>
+                </div>
+                <div class="salida"></div>
+            </section>
+
+            <script>
+                let personas = [];
+                let caja_nombre = document.getElementById('nombre'),
+                    caja_apellidos = document.getElementById('apellidos'),
+                    caja_poblacion = document.getElementById('poblacion'),
+                    caja_anyo = document.getElementById('anyo');
+                let btn_editar = document.getElementById('btn_editar');
+                let btn_add = document.getElementById('btn_add');
+
+                //Coje los datos
+                function cojeDatos() {
+                    let errores = false;
+                    let nombre = caja_nombre.value;
+                    nombre = quitaEspacios(nombre);
+                    let apellidos = caja_apellidos.value;
+                    apellidos = quitaEspacios(apellidos);
+                    let poblacion = caja_poblacion.value;
+                    poblacion = quitaEspacios(poblacion);
+                    let anyo = parseInt(caja_anyo.value);
+                    errores = compruebaDatos(nombre, apellidos, poblacion, anyo, errores);
+                    if (!errores) {
+                        caja_nombre.value = '';
+                        caja_apellidos.value = '';
+                        caja_poblacion.value = '';
+                        caja_anyo.value = '';
+                        let persona = new Persona(nombre, apellidos, poblacion, anyo);
+                        personas.push(persona);
+                        muestraTablas();
+                    }
+                }
+                document.getElementById('btn_add').onclick = cojeDatos;
+
+                //Genera tablas con los datos del array
+                function muestraTablas() {
+                    let salida = document.querySelector('.salida');
+                    salida.innerHTML = '';
+                    let tabla = creaElemento('table', 'tabla-personas');
+                    let titulo = creaElemento('caption', 'tabla-titulo', 'Listado controlado mediante JavaScript');
+                    let cabecera = creaElemento('thead', 'cabecera-tabla');
+                    let cuerpo = creaElemento('tbody', 'cuerpo-tabla');
+                    let fila_cabecera = creaElemento('tr', 'fila-cabecera');
+                    let persona_nombre = '';
+                    let persona_apellidos = '';
+                    let persona_poblacion = '';
+                    let persona_anyo = 0;
+                    let cabecera_nombre = creaElemento('th', 'cabecera-nombre', 'Nombre');
+                    cabecera_nombre.onclick = () => ordenaElementos('nombre');
+                    let cabecera_apellidos = creaElemento('th', 'cabecera-apellidos', 'Apellidos');
+                    cabecera_apellidos.onclick = () => ordenaElementos('apellidos');
+                    let cabecera_poblacion = creaElemento('th', 'cabecera-poblacion', 'Población');
+                    cabecera_poblacion.onclick = () => ordenaElementos('poblacion');
+                    let cabecera_anyo = creaElemento('th', 'cabecera-anyo', 'Año');
+                    cabecera_anyo.onclick = () => ordenaElementos('anyo');
+                    let vacio = creaElemento('th');
+                    fila_cabecera.append(cabecera_nombre, cabecera_apellidos, cabecera_poblacion, cabecera_anyo, vacio);
+                    cabecera.append(fila_cabecera);
+                    tabla.append(titulo, cabecera);
+                    for (let i = 0; i < personas.length; i++) {
+                        let fila_cuerpo = creaElemento('tr', 'fila-cuerpo');
+                        let nombre = creaElemento('td', 'nombre-persona', personas[i].nombre);
+                        let apellidos = creaElemento('td', 'apellidos-persona', personas[i].apellidos);
+                        let poblacion = creaElemento('td', 'poblacion-persona', personas[i].poblacion);
+                        let anyo = creaElemento('td', 'anyo-persona', personas[i].anyo);
+                        let botones = creaElemento('td', 'botones-tabla');
+                        let btn_edit = creaElemento('button', 'edita-elemento', 'Editar');
+                        btn_edit.onclick = () => editaPersona(i);
+                        let btn_del = creaElemento('button', 'edita-elemento', 'Eliminar');
+                        btn_del.onclick = () => eliminaPersonas(i);
+                        botones.append(btn_edit, btn_del);
+                        fila_cuerpo.append(nombre, apellidos, poblacion, anyo, botones);
+                        cuerpo.append(fila_cuerpo);
+                    }
+                    tabla.append(cuerpo);
+                    salida.append(tabla);
+                }
+
+                //Funciones para editar y borrar personas del array
+                function editaPersona(indice) {
+                    caja_nombre.value = personas[indice].nombre;
+                    caja_apellidos.value = personas[indice].apellidos;
+                    caja_poblacion.value = personas[indice].poblacion;
+                    caja_anyo.value = personas[indice].anyo;
+                    btn_add.disabled = true;
+                    btn_editar.disabled = false;
+                    btn_editar.onclick = () => muestraEditado(indice);
+                }
+                function muestraEditado(indice) {
+                    let errores = true;
+                    let nombre = caja_nombre.value;
+                    nombre = quitaEspacios(nombre);
+                    let apellidos = caja_apellidos.value;
+                    apellidos = quitaEspacios(apellidos);
+                    let poblacion = caja_poblacion.value;
+                    poblacion = quitaEspacios(poblacion);
+                    let anyo = parseInt(caja_anyo.value);
+                    errores = compruebaDatos(nombre, apellidos, poblacion, anyo, errores);
+                    if (errores) {
+                        caja_nombre.value = '';
+                        caja_apellidos.value = '';
+                        caja_poblacion.value = '';
+                        caja_anyo.value = '';
+                        personas[indice].nombre = nombre;
+                        personas[indice].apellidos = apellidos;
+                        personas[indice].poblacion = poblacion;
+                        personas[indice].anyo = anyo;
+                        muestraTablas();
+                        btn_add.disabled = false;
+                        btn_editar.disabled = true;
+                    }
+                }
+
+                function eliminaPersonas(indice) {
+                    if (confirm(`¿Seguro que quieres eliminar a ${personas[indice].nombre} ${personas[indice].apellidos}?`)) {
+                        personas.splice(indice, 1);
+                        muestraTablas();
+                    }
+                }
+
+                //Funciones secundarias
+
+                //Quita espacios
+                function quitaEspacios(texto) {
+                    texto = texto.trim();
+                    while (texto.indexOf('  ') != -1) {
+                        texto = texto.replace('  ', ' ');
+                    }
+                    return texto;
+                }
+
+                //genera objetos
+                function Persona(nombre, apellidos, poblacion, anyo) {
+                    this.nombre = nombre;
+                    this.apellidos = apellidos;
+                    this.poblacion = poblacion;
+                    this.anyo = anyo;
+                }
+
+                //Genera elementos para la tabla
+                function creaElemento(elemento, clase, texto) {
+                    let nodo = document.createElement(elemento);
+                    nodo.className = clase;
+                    nodo.textContent = texto;
+                    return nodo;
+                }
+
+                //Comprobar si los datos introducidos están permitidos
+                function compruebaDatos(nombre, apellidos, poblacion, anyo, errores) {
+                    if (document.querySelector('.globo-error')) {
+                        let inputs = document.querySelectorAll('input');
+                        for (let input of inputs) {
+                            input.style.borderColor = 'black';
+                        }
+                        let globos = document.querySelectorAll('.globo-error');
+                        for (let globo of globos) {
+                            globo.remove();
+                        }
+                    }
+                    if (!isNaN(nombre) || nombre == '' || nombre == ' ' || nombre == undefined) {
+                        let globo_error = document.createElement('span');
+                        globo_error.className = 'globo-error';
+                        if (nombre == '' || nombre == ' ' || nombre == undefined) {
+                            globo_error.textContent = 'No puedes dejar campos vacios';
+                        } else if (!isNaN(nombre)) {
+                            globo_error.textContent = 'No puedes introducir números';
+                        }
+                        caja_nombre.parentNode.append(globo_error);
+                        caja_nombre.style.borderColor = 'red';
+                        caja_nombre.onclick = () => {
+                            caja_nombre.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_nombre.onchange = () => {
+                            caja_nombre.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_nombre.value = '';
+                        errores = true;
+                    }
+                    if (!isNaN(apellidos) || apellidos == '' || apellidos == ' ' || apellidos == undefined) {
+                        let globo_error = document.createElement('span');
+                        globo_error.className = 'globo-error';
+                        if (apellidos == '' || apellidos == ' ' || apellidos == undefined) {
+                            globo_error.textContent = 'No puedes dejar campos vacios';
+                        } else if (!isNaN(apellidos)) {
+                            globo_error.textContent = 'No puedes introducir números';
+                        }
+                        caja_apellidos.style.borderColor = 'red';
+                        caja_apellidos.onclick = () => {
+                            caja_apellidos.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_apellidos.onchange = () => {
+                            caja_apellidos.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_apellidos.parentNode.append(globo_error);
+                        caja_apellidos.value = '';
+                        errores = true;
+                    }
+                    if (!isNaN(poblacion) || poblacion == '' || poblacion == ' ' || poblacion == undefined) {
+                        let globo_error = document.createElement('span');
+                        globo_error.className = 'globo-error';
+                        if (poblacion == '' || poblacion == ' ' || poblacion == undefined) {
+                            globo_error.textContent = 'No puedes dejar campos vacios';
+                        } else if (!isNaN(poblacion)) {
+                            globo_error.textContent = 'No puedes introducir números'
+                        }
+                        caja_poblacion.style.borderColor = 'red';
+                        caja_poblacion.onclick = () => {
+                            caja_poblacion.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_poblacion.onchange = () => {
+                            caja_poblacion.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_poblacion.parentNode.append(globo_error);
+                        caja_poblacion.value = '';
+                        errores = true;
+                    }
+                    if (isNaN(anyo) || anyo < 1900 || anyo > 2022 || anyo == undefined) {
+                        let globo_error = document.createElement('span');
+                        globo_error.className = 'globo-error';
+                        if (isNaN(anyo) || anyo == undefined) {
+                            globo_error.textContent = 'Solo puedes introducir números';
+                        }
+                        else if (anyo < 1900) {
+                            globo_error.textContent = 'El año es demasiado bajo';
+                        } else if (anyo > 2022) {
+                            globo_error.textContent = 'El año es demasiado alto';
+                        }
+                        caja_anyo.style.borderColor = 'red';
+                        caja_anyo.onclick = () => {
+                            caja_anyo.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_anyo.onchange = () => {
+                            caja_anyo.style.borderColor = 'black';
+                            globo_error.remove();
+                        }
+                        caja_anyo.parentNode.append(globo_error);
+                        caja_anyo.value = '';
+                        errores = true;
+                    }
+                    return errores;
+                }
+
+                //Ordenar elementos de tabla
+                let orden = 1;
+                function ordenaElementos(elem) {
+                    personas.sort(ordenaDatos);
+                    function ordenaDatos(a, b) {
+                        if (elem == 'anyo') {
+                            if (a[elem] == b[elem]) {
+                                return 0;
+                            } else {
+                                return (a[elem] - b[elem]) * orden;
+                            }
+                        } else {
+                            let x = a[elem].toLowerCase();
+                            let y = b[elem].toLowerCase();
+                            if (x == y) {
+                                return 0;
+                            } else {
+                                return (x > y ? 1 : -1) * orden;
+                            }
+                        }
+                    }
+                    muestraTablas();
+                    if (orden === 1) {
+                        orden = -1;
+                    } else {
+                        orden = 1;
+                    }
+
+                }
+            </script>
+        </body>
+    </div>
+</main>
+
+</html>
